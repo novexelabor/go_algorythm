@@ -1,4 +1,4 @@
-package main
+package ArrayList
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type List interface {
 	Clear()                                     //清空
 	Delete(index int) error                     //删除
 	String() string                             //返回字符串
-	// Iterator() Iterator //接口
+	Iterator() Iterator                         //接口
 }
 
 //数据结构，字符串，整数，实数
@@ -95,16 +95,4 @@ func (list *ArrayList) Delete(index int) error { //删除
 	list.dataStore = append(list.dataStore[:index], list.dataStore[index+1:]...) //重新叠加跳过index,删除
 	list.TheSize--
 	return nil
-}
-
-func main() {
-	//定义接口对象，赋值的对象必须实现接口的所有方法
-	var list List = NewArrayList()
-	list.Append("a1")
-	list.Append("b2")
-	list.Append("c3")
-	for i := 0; i < 55; i++ {
-		list.Insert(1, "x5")
-		fmt.Println(list)
-	}
 }
