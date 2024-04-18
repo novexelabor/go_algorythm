@@ -1,0 +1,119 @@
+# 使用cap(ch)函数查询channel的容量，cap是golang的内置函数
+
+# 使用len(ch)函数查询channel内部的数据长度，len函数也是内置的，
+
+# 使用close(ch)关闭channel，close也是内置函数。一个非空channel只能够被关闭一次，
+如果关闭一个已经被关闭的或者是关闭一个空channel将会引发panic。
+
+
+
+# 使用ch <- v发送一个值v到channel。发送值到channel可能会有多种结果，即可能成功，
+也可能阻塞，甚至还会引发panic，取决于当前channel在什么状态。
+
+# 使用 v, ok <- ch 接收一个值。第二个遍历ok是可选的，它表示channel是否已关闭。
+接收值只会又两种结果，要么成功要么阻塞，而永远也不会引发panic。
+
+注意：关闭一个只读channel是非法的，编译器直接报错！
+注意：所有的这些操作都是同步的协程安全的，不需要加任何其它同步控制！
+
+# For-Range
+
+for-range语法可以用到通道上。循环会一直接收channel里面的数据，直到channel关闭。
+不同于array/slice/map上的for-range，channel的for-range只允许有一个变量。
+
+for v = range aChannel {
+	// use v
+}
+等价于
+
+for {
+	v, ok = <-aChannel
+	if !ok {
+		break
+	}
+	// use v
+}
+注意，for-range对应的channel不能是只写channel。
+
+# Select-Cases
+
+select块是为channel特殊设计的语法，它和switch语法非常相近。
+分支上它们都可以有多个case块和做多一个default块，但是也有很多不同
+
+select 到 括号{之间不得有任何表达式
+
+Go里面switch默认相当于每个case最后带有break，匹配成功后不会自动向下执行其他case，
+而是跳出整个switch, 但是可以使用fallthrough强制执行后面的case代码，fallthrough
+不会判断下一条case的expr结果是否为true。
+
+但是fallthrough关键字不能用在select里面！
+
+所有的case语句要么是channel的发送操作，要么就是channel的接收操作
+
+select里面的case语句是随机执行的，而不能是顺序执行的。
+设想如果第一个case语句对应的channel是非阻塞的话，case语句的顺序执行会导致后续的case语句
+一直得不到执行除非第一个case语句对应的channel里面的值都耗尽了。
+
+如果所有case语句关联的操作都是阻塞的，default分支就会被执行。如果没有default分支，
+当前goroutine就会阻塞，当前的goroutine会挂接到所有关联的channel内部的协程队列上。
+所以说单个goroutine是可以同时挂接到多个channel上的，甚至可以同时挂接到同一个channel
+的发送协程队列和接收协程队列上。当一个阻塞的goroutine拿到了数据接触阻塞的时候，
+它会从所有相关的channel队列中移除掉。
+
+## 空channel：
+
+* 关闭一个空channel会导致当前goroutine引发panic
+
+* 向一个空channel发送值会导致当前的goroutine阻塞
+
+* 从一个空channel接收值也会导致当前的goroutine阻塞
+
+* 在空channel上的调用len和cap函数都统一返回零。
+
+
+# 已关闭的Channel
+
+* 关闭一个已关闭的channel会引发panic
+
+* 向一个已关闭的channel发送值会引发panic。当这种send操作处于select块里面的case语句上时，
+  它会随时导致select语句引发panic。
+
+* 从一个已关闭的channel上接收值既不会阻塞也不能panic，它一直能成功返回。
+  只是返回的第二个值ok永远是false，表示接收到的v是在channel关闭之后拿到的，
+  对应得值也是相应元素类型的零值。可以无限循环从已关闭的channel上接收值。
+
+
+# 活跃的Channel
+
+* 关闭操作
+
+从channel的接收协程队列中移除所有的goroutine，并唤醒它们。
+
+一个已关闭的channel内部的缓冲数组可能不是空的，没有接收的这些值会导致channel对象
+永远不会被垃圾回收。
+
+* 发送操作
+
+如果是阻塞型channel，那就从channel的接收协程队列中移出第一个协程，然后把发送的值直接
+递给这个协程。
+
+如果是阻塞型channel，并且channel的接收协程队列是空的，那么当前的协程将会阻塞，
+并进入到channel的发送协程队列里。
+
+如果是缓冲型channel，并且缓冲数组里还有空间，那么将发送的值添加到数组最后，当前协程不阻塞。
+
+如果是缓冲型channel，并且缓冲数组已经满了，那么当前的协程将会阻塞，并进入到channel的
+发送协程队列中。
+
+* 接收操作
+
+如果是缓冲型channel，并且缓冲数组有值，那么当前的协程不会阻塞，直接从数组中拿出第一个值。
+如果发送队列非空，还需要将队列中的第一个goroutine唤醒。
+
+如果是阻塞型channel，并且发送队列非空的话，那么唤醒发送队列第一个协程，该协程会将发送的
+值直接递给接收的协程。
+
+如果是缓冲型channel，并且缓冲数组为空，或者是阻塞型channel，并且发送协程队列为空，
+那么当前协程将会阻塞，并加入到channel的接收协程队列中。
+
+
