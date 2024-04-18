@@ -1,0 +1,88 @@
+package main
+
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"net"
+	"sort"
+)
+
+func BytesToInt(bts []byte) int {
+	bytebuffer := bytes.NewBuffer(bts)
+	var data int64
+	//从byte切片中读取数据写入到data
+	binary.Read(bytebuffer, binary.BigEndian, &data)
+	return int(data)
+}
+func IntTobytes(n int) []byte {
+	data := int64(n)
+	bytebuffer := bytes.NewBuffer([]byte{})
+	binary.Write(bytebuffer, binary.BigEndian, data)
+	return bytebuffer.Bytes()
+}
+func MsgHandler(conn net.Conn) {
+	buf := make([]byte, 16)
+	defer conn.Close()
+	arr := []int{} //数组保存数据
+	for {          //for循环一直到链接关闭
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println("client close")
+			return
+		}
+		if n == 16 {
+
+			//数据的格式00表示开始处理的，10表示后续有数据，01表示数据已完成了
+
+			data1 := BytesToInt(buf[:len(buf)/2]) //取出的第一个数据
+			data2 := BytesToInt(buf[len(buf)/2:]) //取出第二个数据
+			if data1 == 0 && data2 == 0 {
+				arr = make([]int, 0) //开辟数据
+			}
+			if data1 == 1 { //每次循环添加数据
+				arr = append(arr, data2) //接受数据
+			}
+			if data1 == 0 && data2 == 1 {
+				fmt.Println("数组接收完成", arr)
+				sort.Ints(arr) //排序，服务器处理完客户端的排序请求，再将数据传输回客户端
+				fmt.Println("数组排序完成", arr)
+				//写入，00开始
+				mybstart := IntTobytes(0) //0代表没有数据了
+				mybstart = append(mybstart, IntTobytes(0)...)
+				conn.Write(mybstart)
+				//1_传输数据
+				for i := 0; i < len(arr); i++ {
+					mybdata := IntTobytes(1) //1代表有数据的，没有传输完
+					mybdata = append(mybdata, IntTobytes(arr[i])...)
+					conn.Write(mybdata)
+				}
+				//01完成
+				mybend := IntTobytes(0)
+				mybend = append(mybend, IntTobytes(1)...)
+				conn.Write(mybend)
+
+				arr = make([]int, 0) //开辟数据
+			}
+
+		}
+
+	}
+
+}
+func main() {
+	server_listener, err := net.Listen("tcp", "127.0.0.1:7001")
+	if err != nil {
+		panic(err) //处理错误
+	}
+	defer server_listener.Close() //延迟关闭
+	for {
+		new_conn, err := server_listener.Accept() //接收消息
+		if err != nil {
+			panic(err) //处理错误
+		}
+		go MsgHandler(new_conn) //处理客户端消息
+
+	}
+
+}
