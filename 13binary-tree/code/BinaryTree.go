@@ -119,11 +119,11 @@ func (bst *BinaryTree) PreOrderNoRecursion() []int {
 			mybst = mybst.Left
 		}
 		if mystack.Len() != 0 {
-			v := mystack.Back()     //挨个取出节点
+			v := mystack.Back()     //挨个取出节点，仅仅是取出栈顶元素
 			mybst = v.Value.(*Node) //实例化
 			//res=append(res,mybst.Data)//压入数据
 			mybst = mybst.Right //追加
-			mystack.Remove(v)   //删除
+			mystack.Remove(v)   //删除，在右指针相当于跟节点，将栈中删除
 		}
 	}
 	return res
@@ -322,7 +322,7 @@ func (bst *BinaryTree) remove(n *Node, data int) *Node {
 func (bst *BinaryTree) Levelshow() {
 	bst.levelshow(bst.Root)
 }
-func (bst *BinaryTree) levelshow(n *Node) {
+func (bst *BinaryTree) levelshow(n *Node) { //层次遍历
 	myqueue := list.New() //新建一个list模拟队列
 	myqueue.PushBack(n)   //后面压入数据
 	for myqueue.Len() > 0 {
@@ -355,6 +355,7 @@ func (bst *BinaryTree) Stackshow(n *Node) {
 
 }
 
+//递归寻找最近的公共祖先
 func (bst *BinaryTree) FindlowerstAncestor(root *Node, nodea *Node, nodeb *Node) *Node {
 	if root == nil {
 		return nil

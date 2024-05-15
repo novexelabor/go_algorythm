@@ -26,7 +26,7 @@ func main() {
 
 	node6.Left = node8
 
-	bst.Size = 7
+	bst.Size = 8
 	nodelast := bst.FindlowerstAncestor(bst.Root, node6, node7)
 	fmt.Println(nodelast)
 	fmt.Println(bst.GetDepth(bst.Root))
