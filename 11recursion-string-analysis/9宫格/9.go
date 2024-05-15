@@ -41,11 +41,11 @@ func fillbox(i, n, r int, count *int) {
 	if i == n {
 		(*count)++
 		fmt.Printf("--------------%d\n", *count)
-		for i := 0; i < r; i++ {
+		for i := 0; i < r; i++ { //9宫格  三行三列
 			for j := 0; j < r; j++ {
 				fmt.Printf("%3d", pos[i*r+j])
 			}
-			fmt.Println()
+			fmt.Println() //换行
 		}
 
 		return
