@@ -3,8 +3,8 @@ package Calc
 //主函数
 func Calc(input string) int64 {
 	lexer := NewLexer(input)
-	parser := NewParser(lexer) //初始化
-	exp := parser.ParseExpression(LOWEST)
+	parser := NewParser(lexer)            //初始化
+	exp := parser.ParseExpression(LOWEST) //递归处理表达式计算
 	return Eval(exp)
 }
 

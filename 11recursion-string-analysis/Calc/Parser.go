@@ -100,7 +100,7 @@ func (p *Parser) expectPeek(t string) bool {
 }
 func (p *Parser) ParseExpression(precedence int) Expression {
 	prefix := p.prefixParseFns[p.curToken.Type] //计算函数
-	returnExp := prefix()
+	returnExp := prefix()                       //相当于一个数了，前缀的数
 
 	for precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type] //前缀

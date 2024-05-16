@@ -65,11 +65,11 @@ func (l *Lexer) ReadChar() {
 
 //123+2,切割数字出来
 func (l *Lexer) ReadNumber() string {
-	position := l.position
+	position := l.position //记录第一个数字的位置
 	for IsDigit(l.ch) {
 		l.ReadChar() //连续提取数字
 	}
-	return l.input[position:l.position]
+	return l.input[position:l.position] //返回连续的数字字符串
 }
 
 //跳过空格

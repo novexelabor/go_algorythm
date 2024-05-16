@@ -36,7 +36,7 @@ var precedences = map[string]int{
 	SLASH:    PRODUCT,
 	ASTERISK: PRODUCT,
 	MOD:      PRODUCT,
-	LPAREN:   CALL,
+	LPAREN:   CALL, //只统计左括号
 	G0:       PREFIX,
 	BIG:      BIGGER,
 }

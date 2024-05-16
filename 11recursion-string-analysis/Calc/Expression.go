@@ -32,7 +32,7 @@ func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
+	out.WriteString(pe.Right.String()) //前缀符号后面的数
 	out.WriteString(")")
 	return out.String()
 }
